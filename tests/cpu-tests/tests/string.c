@@ -20,8 +20,11 @@ int main() {
 	check(strcmp(s[0] + 3, s[1] + 3) < 0);
 
 	check(strcmp( strcat(strcpy(str, str1), s[3]), s[4]) == 0);
+	check(strcmp(str1, s[4]) < 0);
 
+	char t = '#';
 	check(memcmp(memset(str, '#', 5), s[5], 5) == 0);
+	check(memcmp(strncpy(str, &t, 5), s[5], 5) == 0);
 
 	return 0;
 }
