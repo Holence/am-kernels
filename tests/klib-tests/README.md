@@ -1,0 +1,1 @@
+tests come from https://github.com/alelievr/libft-unit-test/blob/master/hardcore-mode/
