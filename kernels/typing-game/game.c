@@ -15,11 +15,15 @@
 enum { WHITE = 0, RED, GREEN, PURPLE };
 struct character {
   char ch;
-  int x, y, v, t;
+  int x, y; // 当前坐标
+  int v; // 速度
+  int t; // 来不及type的，触底后，t会被设为需要显示的持续时间
 } chars[NCHAR];
 
 int screen_w, screen_h, hit, miss, wrong;
-uint32_t texture[3][26][CHAR_W * CHAR_H], blank[CHAR_W * CHAR_H];
+
+uint32_t texture[3][26][CHAR_W * CHAR_H]; // 三种颜色，每种颜色26个字形，每个字形8x16的图样
+uint32_t blank[CHAR_W * CHAR_H]; // 8x16的空图样
 
 int min(int a, int b) {
   return (a < b) ? a : b;
@@ -49,19 +53,23 @@ void game_logic_update(int frame) {
     struct character *c = &chars[i];
     if (c->ch) {
       if (c->t > 0) {
-        if (--c->t == 0) {
+        // 触底后，停留显示
+        if (--c->t == 0) { 
           c->ch = '\0';
         }
       } else {
+        // 没触底的，向下的，或向上的
         c->y += c->v;
         if (c->y < 0) {
+          // 向上的，超过屏幕顶端
           c->ch = '\0';
         }
-        if (c->y + CHAR_H >= screen_h) {
+        else if (c->y + CHAR_H >= screen_h) {
+          // 向下的，触底
           miss++;
           c->v = 0;
           c->y = screen_h - CHAR_H;
-          c->t = FPS;
+          c->t = FPS; // 触底后，停留显示一秒
         }
       }
     }
@@ -71,19 +79,25 @@ void game_logic_update(int frame) {
 void render() {
   static int x[NCHAR], y[NCHAR], n = 0;
 
+  // 消除上一帧的字形
   for (int i = 0; i < n; i++) {
     io_write(AM_GPU_FBDRAW, x[i], y[i], blank, CHAR_W, CHAR_H, false);
   }
 
+  // 绘制新帧的字形
   n = 0;
   for (int i = 0; i < LENGTH(chars); i++) {
     struct character *c = &chars[i];
     if (c->ch) {
       x[n] = c->x; y[n] = c->y; n++;
-      int col = (c->v > 0) ? WHITE : (c->v < 0 ? GREEN : RED);
-      io_write(AM_GPU_FBDRAW, c->x, c->y, texture[col][c->ch - 'A'], CHAR_W, CHAR_H, false);
+      // c->v == 0 : RED
+      // c->v > 0 : WHITE
+      // c->v < 0 : GREEN
+      int color = (c->v > 0) ? WHITE : (c->v < 0 ? GREEN : RED);
+      io_write(AM_GPU_FBDRAW, c->x, c->y, texture[color][c->ch - 'A'], CHAR_W, CHAR_H, false);
     }
   }
+  // 刷新屏幕
   io_write(AM_GPU_FBDRAW, 0, 0, NULL, 0, 0, true);
   for (int i = 0; i < 40; i++) putch('\b');
   printf("Hit: %d; Miss: %d; Wrong: %d", hit, miss, wrong);
@@ -94,6 +108,7 @@ void check_hit(char ch) {
   for (int i = 0; i < LENGTH(chars); i++) {
     struct character *c = &chars[i];
     if (ch == c->ch && c->v > 0 && (m < 0 || c->y > chars[m].y)) {
+      // 尽可能匹配靠底线的
       m = i;
     }
   }
