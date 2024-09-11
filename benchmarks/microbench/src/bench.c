@@ -53,6 +53,7 @@ static void bench_done(Result *res) {
 
 static const char *bench_check(Benchmark *bench) {
   uintptr_t freesp = (uintptr_t)heap.end - (uintptr_t)heap.start;
+  printf("checking memory: %d < %d ?\n", freesp, setting->mlim);
   if (freesp < setting->mlim) {
     return "(insufficient memory)";
   }
@@ -158,6 +159,7 @@ void* bench_alloc(size_t size) {
   size  = (size_t)ROUNDUP(size, 8);
   char *old = hbrk;
   hbrk += size;
+  printf("heap.start: %x hbrk: %x heap.end: %x\n", heap.start, hbrk, heap.end);
   assert((uintptr_t)heap.start <= (uintptr_t)hbrk && (uintptr_t)hbrk < (uintptr_t)heap.end);
   for (uint64_t *p = (uint64_t *)old; p != (uint64_t *)hbrk; p ++) {
     *p = 0;

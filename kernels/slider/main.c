@@ -14,7 +14,7 @@ int main() {
   ioe_init();
 
   int i = 0;
-  unsigned long last = 0;
+  unsigned long last = io_read(AM_TIMER_UPTIME).us / 1000;
   unsigned long current;
 
   display_image(i);
