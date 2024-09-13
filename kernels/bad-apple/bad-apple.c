@@ -107,10 +107,15 @@ int main() {
      }
      // ESC to quit
      AM_INPUT_KEYBRD_T ev = io_read(AM_INPUT_KEYBRD);
-     if (ev.keydown && ev.keycode == AM_KEY_ESCAPE) halt(0);
+     if (ev.keydown && ev.keycode == AM_KEY_ESCAPE){
+      break;
+     }
      uint64_t next = now + (1000 * 1000 / FPS);
      sleep_until(next);
      now = next;
+  }
+  if (has_audio) {
+    io_write(AM_AUDIO_CTRL, 0, 0, 0);
   }
   return 0;
 }
