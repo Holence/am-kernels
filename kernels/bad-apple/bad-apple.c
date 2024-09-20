@@ -51,7 +51,7 @@ int main() {
   0x8000 == 32768 Bytes
   而如果是128x96的尺寸，96*128*4 == 49152 Bytes
   buffer的地址为 0x81C0DFB0，已经跨越了_stack_top的底线，跑到了全局变量区
-  buffer比lut的地址还低，buffer[index]是往高处写，把全局变量区都抹了，调用ioe_write时函数都找不到
+  导致buffer比lut的地址还低，由于buffer[index]是往高处写，就把全局变量区都抹了，所以调用ioe_write时函数都找不到了
   */
   AM_GPU_CONFIG_T info = io_read(AM_GPU_CONFIG);
   int vga_x = (info.width - VIDEO_COL) / 2;
