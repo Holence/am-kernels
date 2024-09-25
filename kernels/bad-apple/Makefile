@@ -1,7 +1,15 @@
-VIDEO_ROW = 25
-VIDEO_COL = 80
-AUDIO_FREQ = 44100
-AUDIO_CHANNEL = 1
+# Navy那边编译后要放入ramdisk，需要体积小一点
+ifeq ($(AM_HOME), $(NAVY_HOME))
+  VIDEO_ROW = 48
+  VIDEO_COL = 64
+  AUDIO_FREQ = 11025
+else
+  VIDEO_ROW = 96
+  VIDEO_COL = 128
+  AUDIO_FREQ = 44100
+endif
+
+AUDIO_CHANNEL = 2
 
 VIDEO_SRC = bad-apple.mp4
 VIDEO = build/video.frame

@@ -14,6 +14,8 @@ all:
 	$(MAKE) build_am
 	$(MAKE) restore_config
 	$(MAKE) -C $(NEMU_HOME) run IMG=$(NEMU_HOME)/build/$(ISA)-nemu-interpreter-$(ARCH).bin
+# log and ftrace
+#$(MAKE) -C $(NEMU_HOME) run IMG=$(NEMU_HOME)/build/$(ISA)-nemu-interpreter-$(ARCH).bin ARGS="-l $(NEMU_HOME)/build/$(ISA)-nemu-interpreter-$(ARCH)-log.txt -e $(NEMU_HOME)/build/$(ISA)-nemu-interpreter-$(ARCH).elf"
 
 save_config:
 	$(MAKE) -C $(NEMU_HOME) savedefconfig

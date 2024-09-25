@@ -17,8 +17,14 @@ static void f(void *arg) {
 }
 
 static Context *schedule(Event ev, Context *prev) {
+  // save the context pointer
   current->cp = prev;
+
+  // switch between pcb[0] and pcb[1]
+  // 第一次其实是current==&pcb_boot，这里就让跳到 pcb[0] 去
   current = (current == &pcb[0] ? &pcb[1] : &pcb[0]);
+
+  // then return the new context
   return current->cp;
 }
 

@@ -1,6 +1,10 @@
 #include <am.h>
 #include <stdio.h>
 #include <klib-macros.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define HAS_GUI // 开启VGA
 
 #define FPS 30
 #define CHAR_WHITE '.'
@@ -33,7 +37,28 @@ int main() {
 
   frame_t *f = (void *)&video_payload;
   frame_t *fend = (void *)&video_payload_end;
+  #ifdef HAS_GUI
+  uint32_t* buffer = malloc(VIDEO_ROW * VIDEO_COL* sizeof(uint32_t));
+  /*
+  这里不能用栈来存大数组！！！
+  // uint32_t buffer[VIDEO_ROW * VIDEO_COL];
+  因为/abstract-machine/scripts/linker.ld中把客户程序的栈区写死了，为0x8000个字节（32KB）
+  ```
+  _stack_top = ALIGN(0x1000);
+  . = _stack_top + 0x8000;
+  _stack_pointer = .;
+  ```
+  0x8000 == 32768 Bytes
+  而如果是128x96的尺寸，96*128*4 == 49152 Bytes
+  buffer的地址为 0x81C0DFB0，已经跨越了_stack_top的底线，跑到了全局变量区
+  导致buffer比lut的地址还低，由于buffer[index]是往高处写，就把全局变量区都抹了，所以调用ioe_write时函数都找不到了
+  */
+  AM_GPU_CONFIG_T info = io_read(AM_GPU_CONFIG);
+  int vga_x = (info.width - VIDEO_COL) / 2;
+  int vga_y = (info.height - VIDEO_ROW) / 2;
+  #else
   printf("\033[H\033[J");  // screan_clear
+  #endif
 
   bool has_audio = io_read(AM_AUDIO_CONFIG).present;
   if (has_audio) {
@@ -44,6 +69,20 @@ int main() {
   
   uint64_t now = io_read(AM_TIMER_UPTIME).us;
   for (; f < fend; f ++) {
+    #ifdef HAS_GUI
+      memset(buffer, 0, VIDEO_ROW * VIDEO_COL * sizeof(uint32_t));
+      int index = 0;
+      for (int y = 0; y < VIDEO_ROW; y++) {
+        for (int x = 0; x < VIDEO_COL; x++) {
+          uint8_t p = getbit(f->pixel, y * VIDEO_COL + x);
+          if (p) {
+            buffer[index] = 0x00FFFFFF;
+          }
+          index++;
+        }
+      }
+      io_write(AM_GPU_FBDRAW, vga_x, vga_y, buffer, VIDEO_COL, VIDEO_ROW, true);
+    #else
      printf("\033[0;0H");  // reset cursor
      for (int y = 0; y < VIDEO_ROW; y++) {
        for (int x = 0; x < VIDEO_COL; x++) {
@@ -52,9 +91,10 @@ int main() {
        }
        putch('\n');
      }
+    #endif
 
      if (has_audio) {
-       int should_play = (AUDIO_FREQ / FPS) * sizeof(int16_t);
+       int should_play = (AUDIO_FREQ * AUDIO_CHANNEL / FPS) * sizeof(int16_t);
        if (should_play > audio_left) should_play = audio_left;
        while (should_play > 0) {
          int len = (should_play > 4096 ? 4096 : should_play);
@@ -65,10 +105,17 @@ int main() {
        }
        audio_left -= should_play;
      }
-
+     // ESC to quit
+     AM_INPUT_KEYBRD_T ev = io_read(AM_INPUT_KEYBRD);
+     if (ev.keydown && ev.keycode == AM_KEY_ESCAPE){
+      break;
+     }
      uint64_t next = now + (1000 * 1000 / FPS);
      sleep_until(next);
      now = next;
+  }
+  if (has_audio) {
+    io_write(AM_AUDIO_CTRL, 0, 0, 0);
   }
   return 0;
 }
