@@ -94,7 +94,7 @@ int main() {
     #endif
 
      if (has_audio) {
-       int should_play = (AUDIO_FREQ / FPS) * sizeof(int16_t);
+       int should_play = (AUDIO_FREQ * AUDIO_CHANNEL / FPS) * sizeof(int16_t);
        if (should_play > audio_left) should_play = audio_left;
        while (should_play > 0) {
          int len = (should_play > 4096 ? 4096 : should_play);

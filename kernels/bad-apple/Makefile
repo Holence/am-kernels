@@ -9,7 +9,7 @@ else
   AUDIO_FREQ = 44100
 endif
 
-AUDIO_CHANNEL = 1
+AUDIO_CHANNEL = 2
 
 VIDEO_SRC = bad-apple.mp4
 VIDEO = build/video.frame
